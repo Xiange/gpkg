@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.47.1
+gpkg_version=0.10.47.2
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -2393,7 +2393,14 @@ gpkg_find_insalled_pkg()
 
 	#echo $findcount
 	[ "$findcount" == "0" ] && showFailed "package $1 is not found" && return 1
-	[ "$findcount" -gt "1"  ] && showFailed "package $1 are too many. " && return 2
+	if [ "$findcount" -gt "1"  ]; then 
+		showFailed "package $1 are too many. " 
+		for pack in $gpkg_packs
+		do
+			echo $pack
+		done
+		return 2
+	fi
 
 	installed_xgb="$pack"
 	return 0
