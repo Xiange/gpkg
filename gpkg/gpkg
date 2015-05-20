@@ -11,7 +11,7 @@ XGPATH_RAW=/var/xiange
 XGPATH=${XGROOT}${XGPATH_RAW}
 XGPATH_TOOLS=$XGPATH/tools
 XGPATH_LIB=$XGPATH/xglibs
-XGPATH_SOURCE=$XGPATH/sources
+XGPATH_SOURCE_RAW=$XGPATH/sources
 XGPATH_PACKAGE=$XGPATH/packages
 XGPATH_DB=$XGPATH/db
 XGPATH_DB_RAW=$XGPATH_RAW/db
@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.47.2
+gpkg_version=0.10.48
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -684,6 +684,7 @@ gpkg_begin_download()
 	export CFLAGS=$CFLAGS
 	export CXXFLAGS=$CXXFLAGS
 	XGPATH_SCRIPT=$XGPATH_LIB/$T/$N
+	XGPATH_SOURCE=$XGPATH_SOURCE_RAW/$N-$V$R
 
 	#include package build scripts
 	. $1
@@ -2124,6 +2125,7 @@ gpkg_list_showallfile()
 gpkg_list_package()
 {
 	gpkg_find_insalled_pkg "$1"
+	err_check "list failed."
 	gpkg_list_showallfile "$installed_xgb"
 }
 
@@ -2392,7 +2394,7 @@ gpkg_find_insalled_pkg()
 	done
 
 	#echo $findcount
-	[ "$findcount" == "0" ] && showFailed "package $1 is not found" && return 1
+	[ "$findcount" == "0" ] && showFailed "package $1 is not installed." && return 1
 	if [ "$findcount" -gt "1"  ]; then 
 		showFailed "package $1 are too many. " 
 		for pack in $gpkg_packs
