@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.48
+gpkg_version=0.10.49
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -98,6 +98,8 @@ gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\tedit package	$NORMAL\tedit xgb file with vim\n
 	$INFO\tnew type/package-version	$NORMAL\tnew xgb file with vim\n
 	$INFO\trm package-version	$NORMAL\tremove xgb file with vim\n
+	$INFO\tcs package	$NORMAL\tshow script path of specified package\n
+	$INFO\tcd package	$NORMAL\tshow db path of specified package\n
 	$INFO\t-info		$NORMAL\t\tshow gpkg parameters. to modify parameters, gpkg info > $XGROOT/etc/xgparas, then edit it.\n
 XianGe base is at $XGPATH\n
 	$INFO\tGPKGNC$NORMAL\t\t\"GPKGNC=1 gpkg\" to remove output color.\n
@@ -1395,6 +1397,46 @@ gpkg_begin_rmxgb()
 		fi
 	fi
 }
+
+gpkg_cd_xgb()
+{
+	local newest
+	local ret
+	local iname
+	local iver
+	local irver
+	local itype
+	local dep
+	local leading
+
+
+	#get xgb file
+	gpkg_getxgbfile $1
+	if [ "$?" == "0" ]; then
+		echo $XGPATH_DB/$T/$N
+	fi
+}
+
+gpkg_cs_xgb()
+{
+	local newest
+	local ret
+	local iname
+	local iver
+	local irver
+	local itype
+	local dep
+	local leading
+
+
+	#get xgb file
+	gpkg_getxgbfile $1
+	if [ "$?" == "0" ]; then
+		echo $XGPATH_LIB/$T/$N
+	fi
+}
+
+
 
 
 #new xgb file, $1 is package name, $2 is version, $3 is type
@@ -3627,6 +3669,14 @@ new)
 
 rm)
 	gpkg_begin_rmxgb "$2"
+	;;
+
+cd)
+	gpkg_cd_xgb "$2"
+	;;
+
+cs)
+	gpkg_cs_xgb "$2"
 	;;
 
 
