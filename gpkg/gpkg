@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.49
+gpkg_version=0.10.50
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -1044,6 +1044,7 @@ gpkg_begin_install()
 
 	#call init
 	XGPATH_SCRIPT=$XGPATH_LIB/$T/$N
+	XGPATH_SOURCE=$XGPATH_SOURCE_RAW/$N-$V$R
 	#echo script=$XGPATH_SCRIPT/$N-$V$R.xgb
 	. $XGPATH_SCRIPT/$N-$V$R.xgb
 	err_check "include xgb file failed."
@@ -1311,6 +1312,7 @@ gpkg_install_dep()
 
 	#call init
 	XGPATH_SCRIPT=$XGPATH_LIB/$T/$N
+	XGPATH_SOURCE=$XGPATH_SOURCE_RAW/$N-$V$R
 	. $XGPATH_SCRIPT/$N-$V$R.xgb
 	err_check "include xgb file failed."
 
@@ -1413,6 +1415,7 @@ gpkg_cd_xgb()
 	#get xgb file
 	gpkg_getxgbfile $1
 	if [ "$?" == "0" ]; then
+		atom_parse_path $newest
 		echo $XGPATH_DB/$T/$N
 	fi
 }
@@ -1432,6 +1435,7 @@ gpkg_cs_xgb()
 	#get xgb file
 	gpkg_getxgbfile $1
 	if [ "$?" == "0" ]; then
+		atom_parse_path $newest
 		echo $XGPATH_LIB/$T/$N
 	fi
 }
@@ -1571,6 +1575,7 @@ gpkg_showdep()
 
 	#call init
 	XGPATH_SCRIPT=$XGPATH_LIB/$T/$N
+	XGPATH_SOURCE=$XGPATH_SOURCE_RAW/$N-$V$R
 	. $XGPATH_SCRIPT/$N-$V$R.xgb
 	err_check "include xgb file failed."
 
@@ -2297,6 +2302,7 @@ gpkg_do_remove_package_mark()
 	. $XGPATH_SCRIPT/$N-$V$R.xgb
 	err_check "include xgb file failed."
 
+	XGPATH_SOURCE=$XGPATH_SOURCE_RAW/$N-$V$R
 	xgb_init
 	err_check "call xgb_init failed"
 
@@ -2363,6 +2369,7 @@ gpkg_do_remove_package()
 	. $XGPATH_SCRIPT/$N-$V$R.xgb
 	err_check "include xgb file failed."
 
+	XGPATH_SOURCE=$XGPATH_SOURCE_RAW/$N-$V$R
 	xgb_init
 	err_check "call xgb_init failed"
 
@@ -2578,6 +2585,7 @@ gpkg_install_binary_package_raw()
 
 	#include package build scripts
 	XGPATH_SCRIPT=$XGPATH_DB/$T/$N
+	XGPATH_SOURCE=$XGPATH_SOURCE_RAW/$N-$V$R
 	. $XGPATH_SCRIPT/$N-$V$R.xgb
 	err_check "[Error] $XGPATH_SCRIPT/$N-$V$R.xgb not found."
 
@@ -2742,6 +2750,7 @@ gpkg_upgrade_binary_package()
 
 	#include package build scripts
 	XGPATH_SCRIPT=$XGPATH_DB/$T/$N
+	XGPATH_SOURCE=$XGPATH_SOURCE_RAW/$N-$V$R
 	. $XGPATH_SCRIPT/$N-$V$R.xgb
 	err_check "[Error] $XGPATH_SCRIPT/$1 not found."
 
