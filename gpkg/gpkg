@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.51
+gpkg_version=0.10.53
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -877,9 +877,9 @@ gpkg_dopack()
 		touch $destpath/$N-$V$R.xgb
 	fi
 
-
-	#add configuration parameters
-	echo $XGB_CONFIG > $destpath/$N-$V$R.para
+	if [ -f $XGPATH_BUILD/$N-$V$R.para ]; then
+		mv $XGPATH_BUILD/$N-$V$R.para $destpath
+	fi
 
 	#date time
 	date +%F,%T > $destpath/$N-$V$R.date
@@ -1000,6 +1000,9 @@ gpkg_beginbuild()
 		exit 1
 	fi
 
+	#record correct config
+	echo $XGB_CONFIG > $XGPATH_BUILD/$N-$V$R.para
+
 	#stort current path
 	pwd > $XGPATH_BUILD/install_path
 
@@ -1010,9 +1013,14 @@ gpkg_beginbuild()
 	#check if possiable, and ignore result
 	#store information to /tmp/xiange/$N-$V$R.test
 	rm -f $XGPATH_BUILD/$N-$V$R.pipe2
-	mkfifo $XGPATH_BUILD/$N-$V$R.pipe2
-	tee $XGPATH_BUILD/$N-$V$R.test < $XGPATH_BUILD/$N-$V$R.pipe2 & 
-	xgb_check > $XGPATH_BUILD/$N-$V$R.pipe2
+
+
+	#do not check in cross compile environment
+	if [ -z "$XGB_PREFIX" ]; then
+		mkfifo $XGPATH_BUILD/$N-$V$R.pipe2
+		tee $XGPATH_BUILD/$N-$V$R.test < $XGPATH_BUILD/$N-$V$R.pipe2 & 
+		xgb_check > $XGPATH_BUILD/$N-$V$R.pipe2
+	fi
 }
 
 gpkg_begin_install()
@@ -2592,9 +2600,13 @@ gpkg_install_binary_package_raw()
 	#init build script file
 	xgb_init
 
-	#post install
-	xgb_postinst
-	err_check "[Error] call xgb_postinst failed"
+	#post install: only run in local installation
+	if [ -z "$XGROOT" ]; then
+		xgb_postinst
+		err_check "[Error] call xgb_postinst failed"
+	else
+		showFailed "Note: xgb_postinst does not run when XGROOT set"
+	fi
 
 	#record last update time
 	xgb_update_last
@@ -2758,8 +2770,12 @@ gpkg_upgrade_binary_package()
 	xgb_init
 
 	#post install
-	xgb_postinst
-	err_check "[Error] call xgb_postinst failed"
+	if [ -z "$XGROOT" ]; then
+		xgb_postinst
+		err_check "[Error] call xgb_postinst failed"
+	else
+		showFailed "Note: xgb_postinst does not run when XGROOT set"
+	fi
 
 	#record last update time
 	xgb_update_last
