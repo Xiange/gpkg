@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.50
+gpkg_version=0.10.51
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -1097,7 +1097,7 @@ gpkg_do_checksum_package()
 	XGPATH_SCRIPT=$XGPATH_DB/$T/$N
 	infofile=$XGPATH_SCRIPT/$N-$V$R.file
 
-	xgfileinfo -c "$infofile"
+	xgfileinfo -c "$infofile" -root "$XGROOT"
 	showOK "[***] check $N-$V$R done."
 
 }

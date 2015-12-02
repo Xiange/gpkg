@@ -31,6 +31,7 @@ static long 	f_lDiskUsage=0;
 static int	f_iDCount=0;
 static int	f_iFCount=0;
 static int	f_iSCount=0;
+static char f_NewBase[1024]="";
 const char *applet_name;
 
 /*
@@ -82,7 +83,7 @@ static int do_file_info(void)
 
 static int print_usage(void)
 {
-	printf("\nxgfileinfo v0.9 usage:\n");
+	printf("\nxgfileinfo v1.0 usage:\n");
 	printf("\t--help		: this screen.\n");
 	printf("\t-u file		: rolling update according to file.\n");
 	printf("\t-d file		: Remove package according to file.\n");
@@ -90,6 +91,7 @@ static int print_usage(void)
 	printf("\t-mv src dst	: Move src to dst.\n");
 	printf("\t-rm file		: delete file.\n");
 	printf("\t-rmdir dir	: delete dir.\n");
+	printf("\t-root dir		: set new root instead of /\n");
 	printf("\n-----------------------\n");
 }
 
@@ -124,16 +126,20 @@ static int csvCheckFile(int iIndex, int iLineNo, char* pLine)
 	const char* pCsvSeg[16];
 	int iSegCnt;
 	int iResult;
+	char csNewName[2048];
 
 	//break line to segs.
 	libcsv_getseg(pLine, pCsvSeg, 16);
+
+	strncpy(csNewName, f_NewBase, 1024);
+	strcat(csNewName, pCsvSeg[1]);
 
 
 	//check version.
 	switch(pLine[0])
 	{
 		case 'D':
-			finfo_get(pCsvSeg[1], &real);
+			finfo_get(csNewName, &real);
 			finfo_getFromCSVSeg(pCsvSeg, 16, &rec);
 			iResult=finfo_cmp(&real, &rec, FINFO_CKMASK_DIR);
 
@@ -144,7 +150,7 @@ static int csvCheckFile(int iIndex, int iLineNo, char* pLine)
 			else
 			{
 				f_iFailCnt++;
-				show_error(pCsvSeg[1], iResult, &real, &rec);
+				show_error(csNewName, iResult, &real, &rec);
 			}
 
 			show_progress(f_iPassCnt, f_iFailCnt);
@@ -154,7 +160,7 @@ static int csvCheckFile(int iIndex, int iLineNo, char* pLine)
 
 		case 'F':
 			//file.
-			finfo_get(pCsvSeg[1], &real);
+			finfo_get(csNewName, &real);
 			finfo_getFromCSVSeg(pCsvSeg, 16, &rec);
 			iResult=finfo_cmp(&real, &rec, FINFO_CKMASK_FILE);
 
@@ -165,7 +171,7 @@ static int csvCheckFile(int iIndex, int iLineNo, char* pLine)
 			else
 			{
 				f_iFailCnt++;
-				show_error(pCsvSeg[1], iResult, &real, &rec);
+				show_error(csNewName, iResult, &real, &rec);
 			}
 
 			show_progress(f_iPassCnt, f_iFailCnt);
@@ -175,7 +181,7 @@ static int csvCheckFile(int iIndex, int iLineNo, char* pLine)
 
 		case 'O':
 			//other file, char/block/fifo
-			finfo_get(pCsvSeg[1], &real);
+			finfo_get(csNewName, &real);
 			finfo_getFromCSVSeg(pCsvSeg, 16, &rec);
 			iResult=finfo_cmp(&real, &rec, FINFO_CKMASK_DIR);
 
@@ -186,7 +192,7 @@ static int csvCheckFile(int iIndex, int iLineNo, char* pLine)
 			else
 			{
 				f_iFailCnt++;
-				show_error(pCsvSeg[1], iResult, &real, &rec);
+				show_error(csNewName, iResult, &real, &rec);
 			}
 
 			show_progress(f_iPassCnt, f_iFailCnt);
@@ -198,7 +204,7 @@ static int csvCheckFile(int iIndex, int iLineNo, char* pLine)
 
 		case 'S':
 			//Symbol link.
-			finfo_get(pCsvSeg[1], &real);
+			finfo_get(csNewName, &real);
 			finfo_getFromCSVSeg(pCsvSeg, 16, &rec);
 			iResult=finfo_cmp(&real, &rec, FINFO_CKMASK_LINK);
 
@@ -209,7 +215,7 @@ static int csvCheckFile(int iIndex, int iLineNo, char* pLine)
 			else
 			{
 				f_iFailCnt++;
-				show_error(pCsvSeg[1], iResult, &real, &rec);
+				show_error(csNewName, iResult, &real, &rec);
 			}
 
 			show_progress(f_iPassCnt, f_iFailCnt);
@@ -236,6 +242,7 @@ int argc;
 char **argv;	
 {
 	applet_name = argv[0];
+	int i;
 
 	if(argc == 1)
 	{
@@ -243,68 +250,81 @@ char **argv;
 		return do_file_info();
 	}
 
-	//check parameter: help
-	if(strcmp(argv[1], "--help") == 0)
+	//check parameters
+	for(i=1; i<argc; i++)
 	{
-		return print_usage();
+		if(strcmp(argv[i], "-root") == 0)
+		{
+			strncpy(f_NewBase, argv[i+1], 1024);
+			//printf("NewBase set to %s\n", f_NewBase);
+		}
 	}
 
-	//check parameter: mv
-	if(strcmp(argv[1], "-mv") == 0)
+	for(i=1; i<argc; i++)
 	{
-		char *newgv[5];
+		//check parameter: help
+		if(strcmp(argv[i], "--help") == 0)
+		{
+			return print_usage();
+		}
 
-		newgv[0]="mv";
-		newgv[1]="-f";
-		newgv[2]=argv[2];
-		newgv[3]=argv[3];
-		newgv[4]=NULL;
+		//check parameter: mv
+		if(strcmp(argv[i], "-mv") == 0)
+		{
+			char *newgv[5];
 
-		//call busybox mv
-		return mv_main(4, newgv);
-	}
+			newgv[0]="mv";
+			newgv[1]="-f";
+			newgv[2]=argv[i+1];
+			newgv[3]=argv[i+2];
+			newgv[4]=NULL;
 
-	//check parameter: rm
-	if(strcmp(argv[1], "-rm") == 0)
-	{
-		char *newgv[4];
+			//call busybox mv
+			return mv_main(4, newgv);
+		}
 
-		newgv[0]="rm";
-		//newgv[1]="-r";
-		newgv[1]=argv[2];
-		newgv[2]=NULL;
+		//check parameter: rm
+		if(strcmp(argv[i], "-rm") == 0)
+		{
+			char *newgv[4];
 
-		//call busybox mv
-		return rm_main(3, newgv);
-	}
+			newgv[0]="rm";
+			//newgv[1]="-r";
+			newgv[1]=argv[i+1];
+			newgv[2]=NULL;
 
-	//check parameter: rmdir
-	if(strcmp(argv[1], "-rmdir") == 0)
-	{
-		char *newgv[4];
+			//call busybox mv
+			return rm_main(3, newgv);
+		}
 
-		newgv[0]="rmdir";
-		//newgv[1]="-r";
-		newgv[1]=argv[2];
-		newgv[2]=NULL;
+		//check parameter: rmdir
+		if(strcmp(argv[i], "-rmdir") == 0)
+		{
+			char *newgv[4];
 
-		//call busybox mv
-		return rmdir_main(3, newgv);
-	}
+			newgv[0]="rmdir";
+			//newgv[1]="-r";
+			newgv[1]=argv[i+1];
+			newgv[2]=NULL;
 
-	//check parameter: -c
-	if(strcmp(argv[1], "-c") == 0)
-	{
-		const char* filename=argv[2];
+			//call busybox mv
+			return rmdir_main(3, newgv);
+		}
 
-		bp_init();
+		//check parameter: -c
+		if(strcmp(argv[i], "-c") == 0)
+		{
+			const char* filename=argv[i+1];
 
-		//parse csv file.
-		libcsv_init();
+			bp_init();
 
-		libcsv_parse(filename, csvCheckFile);
+			//parse csv file.
+			libcsv_init();
 
-		printf("\n\n");
+			libcsv_parse(filename, csvCheckFile);
+
+			printf("\n\n");
+		}
 	}
 
 
