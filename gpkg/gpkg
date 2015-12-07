@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #
 # gpkg -- UI program for Xiange Linux package management system 
@@ -29,7 +29,6 @@ XGB_ARCH=$(uname -m)
 XGB_PREFIX=
 CFLAGS="-march=native -mtune=native -O2 -fomit-frame-pointer -pipe"
 CXXFLAGS="$CFLAGS"
-CPPFLAGS="$CFLAGS"
 XGINST_PREFIX="--prefix=/usr"
 XGB_CONFIG="$XGINST_PREFIX "
 XG_I18N="en zh_CN"
@@ -71,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.54
+gpkg_version=0.10.56
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -686,7 +685,7 @@ gpkg_begin_download()
 	#prepare XGB_CONFIG, CFLAGS, CPPFLAGS, XGINST_PREFIX
 	export CFLAGS=$CFLAGS
 	export CXXFLAGS=$CXXFLAGS
-	export CPPFLAGS=$CPPFLAGS
+	export CPPFLAGS=$CFLAGS
 	XGPATH_SCRIPT=$XGPATH_LIB/$T/$N
 	XGPATH_SOURCE=$XGPATH_SOURCE_RAW/$N-$V$R
 
@@ -2591,7 +2590,7 @@ gpkg_install_binary_package_raw()
 	#prepare XGB_CONFIG
 	export CFLAGS=$CFLAGS
 	export CXXFLAGS=$CXXFLAGS
-	export CPPFLAGS=$CPPFLAGS
+	export CPPFLAGS=$CFLAGS
 	XGB_CONFIG="$XGINST_PREFIX "
 
 	#include package build scripts
@@ -2761,7 +2760,7 @@ gpkg_upgrade_binary_package()
 	#prepare XGB_CONFIG
 	export CFLAGS=$CFLAGS
 	export CXXFLAGS=$CXXFLAGS
-	export CPPFLAGS=$CPPFLAGS
+	export CPPFLAGS=$CFLAGS
 	XGB_CONFIG="$XGINST_PREFIX "
 
 	#include package build scripts
