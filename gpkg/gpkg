@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.57
+gpkg_version=0.10.58
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -1066,9 +1066,10 @@ gpkg_begin_install()
 	XGPATH_BUILD=/tmp/xiange/$N-$V$R
 	XGPATH_DEST=$XGPATH_BUILD/pack
 
+	showinfo ">> finding install_path at $XGPATH_BUILD.."
 	#echo "$XGPATH_BUILD"
 	buildpath=$(cat $XGPATH_BUILD/install_path 2>/dev/null)
-	err_check ">> compile not completed."
+	err_check ">> install_path not found, compile not completed."
 	echo "installing in $buildpath"
 
 	pushd $buildpath > /dev/null
@@ -3344,8 +3345,8 @@ xg_gettmpsize()
 {
 	local memsize
 	local swapsize
-	memsize=$(free | gawk '$1 == "Mem:" {print $2}')
-	swapsize=$(free | gawk '$1 == "Swap:" {print $2}')
+	memsize=$(free | awk '$1 == "Mem:" {print $2}')
+	swapsize=$(free | awk '$1 == "Swap:" {print $2}')
 	memsize=$(($memsize/2))
 	tmpsize=$(($swapsize+$memsize))
 }
@@ -3402,6 +3403,7 @@ case "${1}" in
 -im)
 	cd /tmp
 	gpkg_do_build "$2"
+	showinfo "exited."
 	;;
 
 
