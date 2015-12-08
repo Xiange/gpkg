@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.56
+gpkg_version=0.10.57
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -79,7 +79,8 @@ gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-S file 		$NORMAL\tsearch which package file belongs to\n
 	$INFO\t-d package 	$NORMAL\tdownload package\n
 	$INFO\t-i package 	$NORMAL\tinstall package\n
-	$INFO\t-ip package 	$NORMAL\tbuild and make packge\n
+	$INFO\t-ip package 	$NORMAL\tbuild packge but no install, no dep check\n
+	$INFO\t-im package 	$NORMAL\tbuild only, use current user, no su\n
 	$INFO\t-c package 	$NORMAL\tcheck package integrity\n
 	$INFO\t-D package 	$NORMAL\tremove package\n
 	$INFO\t-I  		$NORMAL\t\tlist installed package\n
@@ -3397,6 +3398,12 @@ case "${1}" in
 -ip)
 	gpkg_make_pack_only "$2"
 	;;
+
+-im)
+	cd /tmp
+	gpkg_do_build "$2"
+	;;
+
 
 -buildraw)
 	#internal user only.
