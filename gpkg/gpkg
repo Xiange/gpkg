@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.59
+gpkg_version=0.10.60
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -569,6 +569,13 @@ check_and_download_raw()
 			printf "%s exists, Skip.\n" $fname
 			return 0
 		else
+			#check old file
+			if [ -f ${XGPATH_SOURCE_RAW}/${fname} ]; then
+				printf "%s exists in old location, Skip.\n" $fname
+				mv ${XGPATH_SOURCE_RAW}/${fname} ${XGPATH_SOURCE}
+				err_check "move ${fname} to ${XGPATH_SOURCE_RAW} failed"
+				return 0
+			fi
 			printf "downloading from %s, retry %d...\n" ${1} ${retry}
 
 			if [ -f ${XGPATH_SOURCE}/${fname}.tmp ]; then
