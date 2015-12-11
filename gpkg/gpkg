@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.58
+gpkg_version=0.10.59
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -1022,6 +1022,7 @@ gpkg_beginbuild()
 		mkfifo $XGPATH_BUILD/$N-$V$R.pipe2
 		tee $XGPATH_BUILD/$N-$V$R.test < $XGPATH_BUILD/$N-$V$R.pipe2 & 
 		xgb_check > $XGPATH_BUILD/$N-$V$R.pipe2
+		showinfo "check done, ret $?"
 	fi
 }
 
