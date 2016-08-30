@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.64
+gpkg_version=0.10.64.1
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -2051,6 +2051,7 @@ gpkg_list_inst_info()
 	local t1
 	local t2
 	local tsize
+	local ainfo
 
 	atom_parse_path "$1"
 
@@ -2063,7 +2064,19 @@ gpkg_list_inst_info()
 	csv_split `tail -n 1 $XGPATH_DB/$T/$N/$N-$V$R.file`
 	tsize=${value[5]}
 
-	printf "%s %s $INFO%6sK $FAILURE%s$NORMAL\n" $t1 $t2 $tsize $N-$V$R
+	#get arch
+	xg_getarch "$XGPATH_DB/$T/$N/$N-$V$R.para"
+	if [ "$?" == "0" ]; then
+		if [ "$xgp_native" ]; then
+			ainfo="${xgp_arch}(N)"
+		else
+			ainfo="${xgp_arch}"
+		fi
+		printf "%s %s $INFO%6sK $SUCCESS%10s $FAILURE%s$NORMAL\n" $t1 $t2 $tsize $ainfo $N-$V$R
+	else
+		printf "%s %s $INFO%6sK $WARNING%10s $FAILURE%s$NORMAL\n" $t1 $t2 $tsize Unknown $N-$V$R
+	fi
+
 }
 
 gpkg_list_installed()
@@ -3384,6 +3397,36 @@ xg_gettmpsize()
 	tmpsize=$(($swapsize+$memsize))
 }
 
+# $1 is para file
+xg_getarch()
+{
+	xgp_arch=$(fgrep "XGB_ARCH=" $1)
+	if [ -z "$xgp_arch" ]; then
+		xgp_arch="Unknown"
+		xgp_native=0
+		#showinfo "** ARCH=$xgp_arch"
+		#showinfo "** NATIVE=$xgp_native"
+		return 1
+	else
+		xgp_arch="${xgp_arch:10}"
+		xgp_arch="${xgp_arch%\"}"
+
+		xgp_native=$(fgrep "CFLAGS="  $1)
+		xgp_native=$(echo $xgp_native | grep native)
+		if [ "$?" == "0" ]; then
+			#native
+			xgp_native=1
+		else
+			xgp_native=0
+		fi
+		#showinfo "** ARCH=$xgp_arch"
+		#showinfo "** NATIVE=$xgp_native"
+		return 0;
+		
+	fi
+
+}
+
 #
 # $1 is .xgp name
 # return 
@@ -3405,31 +3448,8 @@ xg_ckeck_binary()
 	parafile="${xgbfile%xgb}para"
 	#showinfo "** para path=$parafile"
 
-	xgp_arch=$(fgrep "XGB_ARCH="  $parafile)
-	if [ -z "$xgp_arch" ]; then
-		xgp_arch="Unknown"
-		xgp_native=0
-		#showinfo "** ARCH=$xgp_arch"
-		#showinfo "** NATIVE=$xgp_native"
-		return 1
-	else
-		xgp_arch="${xgp_arch:10}"
-		xgp_arch="${xgp_arch%\"}"
-
-		xgp_native=$(fgrep "CFLAGS="  $parafile)
-		xgp_native=$(echo $xgp_native | grep native)
-		if [ "$?" == "0" ]; then
-			#native
-			xgp_native=1
-		else
-			xgp_native=0
-		fi
-		#showinfo "** ARCH=$xgp_arch"
-		#showinfo "** NATIVE=$xgp_native"
-		return 0;
-		
-	fi
-
+	xg_getarch "$parafile"
+	return "$?"
 }
 
 #
