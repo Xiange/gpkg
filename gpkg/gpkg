@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.64.1
+gpkg_version=0.10.65
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -457,6 +457,7 @@ gpkg_searchInstalled()
 	local t1
 	local t2
 	local tsize
+	local ainfo
 
 	for file in $files
 	do
@@ -472,7 +473,20 @@ gpkg_searchInstalled()
 		csv_split `tail -n 1 $searchpath/$N-$V$R.file`
 		tsize=${value[5]}
 
-		printf "$NORMAL\tInstalled:$SUCCESS %s | %s %s $BRACKET%sK\n" $V$R $t1 $t2 $tsize 
+		#get arch
+		xg_getarch "$searchpath/$N-$V$R.para"
+
+		if [ "$?" == "0" ]; then
+			if [ "$xgp_native" ]; then
+				ainfo="${xgp_arch}(N)"
+			else
+				ainfo="${xgp_arch}"
+			fi
+
+			printf "$NORMAL\tInstalled:$SUCCESS %s | %s %s $BRACKET%sK $SUCCESS%10s\n" $V$R $t1 $t2 $tsize $ainfo 
+		else
+			printf "$NORMAL\tInstalled:$SUCCESS %s | %s %s $BRACKET%sK $WARNING%10s\n" $V$R $t1 $t2 $tsize Unknown 
+		fi
 		findcnt=$(($findcnt+1))
 	done
 
