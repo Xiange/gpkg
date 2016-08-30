@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.60
+gpkg_version=0.10.64
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -88,6 +88,7 @@ gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-ib xgp_file	$NORMAL\tinstall binary package to system\n
 	$INFO\t-F path		$NORMAL\tfind orphans in path. e.g. not belongs to any package\n
 	$INFO\t-p package	$NORMAL\tshow package dependence\n
+	$INFO\t-ckb package	$NORMAL\tcheck binary packages\n
 	$INFO\t-chroot path	$NORMAL\tchroot to new system, for system installing\n
 	$INFO\t-unchroot path	$NORMAL\tun-chroot\n
 	$INFO\t-rdep package	$NORMAL\tshow reverse dependence\n
@@ -1010,7 +1011,18 @@ gpkg_beginbuild()
 	fi
 
 	#record correct config
-	echo $XGB_CONFIG > $XGPATH_BUILD/$N-$V$R.para
+	echo "XGB_ARCH=\"$XGB_ARCH\"" > $XGPATH_BUILD/$N-$V$R.para
+	echo "XGB_PREFIX=\"$XGB_PREFIX\"" >> $XGPATH_BUILD/$N-$V$R.para
+	echo "CFLAGS=\"$CFLAGS\"" >> $XGPATH_BUILD/$N-$V$R.para
+	echo 'CXXFLAGS="$CFLAGS"' >> $XGPATH_BUILD/$N-$V$R.para
+	echo "XG_I18N=\"$XG_I18N\"" >> $XGPATH_BUILD/$N-$V$R.para
+	echo "XGB_CONFIG=\"$XGB_CONFIG\"" >> $XGPATH_BUILD/$N-$V$R.para
+	echo "XGPARA_MAKE=\"$XGPARA_MAKE\"" >> $XGPATH_BUILD/$N-$V$R.para
+
+	cpuname=$(cat /proc/cpuinfo | grep "model name" | head -n 1)
+	echo "CPU_NAME=\"$cpuname\"" >> $XGPATH_BUILD/$N-$V$R.para
+	echo "GPKG_VERSION=\"$gpkg_version\"" >> $XGPATH_BUILD/$N-$V$R.para
+
 
 	#stort current path
 	pwd > $XGPATH_BUILD/install_path
@@ -2532,7 +2544,7 @@ gpkg_wait_10sec()
 
 gpkg_extract_bininfo()
 {
-	showinfo ">> parsing $1..."
+	#showinfo ">> parsing $1..."
 
 	dbpath=${XGPATH_DB_RAW#/}
 	packname=$1
@@ -2634,6 +2646,7 @@ gpkg_install_binary_package()
 	local packname
 	local infofile
 
+	showinfo ">> parsing $1..."
 	gpkg_extract_bininfo "$1"
 
 	atom_parse_path "$xgbfile"
@@ -2669,6 +2682,7 @@ gpkg_upgrade_binary_package()
 
 	declare -A delmark
 
+	showinfo ">> parsing $1..."
 	gpkg_extract_bininfo "$1"
 
 	#echo "xgb=$xgbfile"
@@ -3172,6 +3186,7 @@ xg_lfs_compare_get()
 xg_lfs_check_package()
 {
 	#check if fname OK
+	#echo "name=|$1|, ver=|$2|"
 	uniname="$1"
 	haveit="${allname[$uniname]}"
 	#echo "haveit=$haveit"
@@ -3220,6 +3235,16 @@ xg_lfs_parsename2()
 	lname=${1,,}
 	lfsn=$(echo $lname | grep -o "^[a-z]*")
 	lfsv=$(echo $lname | grep -o "[0-9.]*" | head -n 1)
+
+	#echo "lfsn=$lfsn, lfsv=$lfsv"
+
+	if [ -z "$lfsn" ]; then
+		return 1
+	fi
+
+	if [ -z "$lfsv" ]; then
+		return 1
+	fi
 
 	#echo "lfsn=$lfsn, lfsv=$lfsv"
 
@@ -3357,6 +3382,54 @@ xg_gettmpsize()
 	swapsize=$(free | awk '$1 == "Swap:" {print $2}')
 	memsize=$(($memsize/2))
 	tmpsize=$(($swapsize+$memsize))
+}
+
+#
+# $1 is .xgp name
+# return 
+#	0 OK
+#	1 failed
+# 	parafile: pathname to .para file
+#	T,N,V,R 
+#	xgp_arch: Unknown, x86_64, i686, ARM, ..
+#	xgp_native: 0,1
+#
+xg_ckeck_binary()
+{
+	gpkg_extract_bininfo "$1"
+
+
+	atom_parse_path "$xgbfile"
+	#showinfo ">> checking $T/$N-$V$R ..."
+
+	parafile="${xgbfile%xgb}para"
+	#showinfo "** para path=$parafile"
+
+	xgp_arch=$(fgrep "XGB_ARCH="  $parafile)
+	if [ -z "$xgp_arch" ]; then
+		xgp_arch="Unknown"
+		xgp_native=0
+		#showinfo "** ARCH=$xgp_arch"
+		#showinfo "** NATIVE=$xgp_native"
+		return 1
+	else
+		xgp_arch="${xgp_arch:10}"
+		xgp_arch="${xgp_arch%\"}"
+
+		xgp_native=$(fgrep "CFLAGS="  $parafile)
+		xgp_native=$(echo $xgp_native | grep native)
+		if [ "$?" == "0" ]; then
+			#native
+			xgp_native=1
+		else
+			xgp_native=0
+		fi
+		#showinfo "** ARCH=$xgp_arch"
+		#showinfo "** NATIVE=$xgp_native"
+		return 0;
+		
+	fi
+
 }
 
 #
@@ -3723,6 +3796,20 @@ cd)
 cs)
 	gpkg_cs_xgb "$2"
 	;;
+
+-ckb)
+	#check package
+	xg_ckeck_binary "$2"
+	if [ "$xgp_native" == "1" ]; then
+		showinfo "$T/$N-$V$R: $xgp_arch (Native)"
+	else
+		showinfo "$T/$N-$V$R: $xgp_arch"
+	fi
+	echo "Paras:"
+	cat $parafile
+
+	;;
+
 
 
 *)
