@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.65
+gpkg_version=0.10.66
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -477,7 +477,7 @@ gpkg_searchInstalled()
 		xg_getarch "$searchpath/$N-$V$R.para"
 
 		if [ "$?" == "0" ]; then
-			if [ "$xgp_native" ]; then
+			if [ "$xgp_native" == "1" ]; then
 				ainfo="${xgp_arch}(N)"
 			else
 				ainfo="${xgp_arch}"
@@ -2081,7 +2081,7 @@ gpkg_list_inst_info()
 	#get arch
 	xg_getarch "$XGPATH_DB/$T/$N/$N-$V$R.para"
 	if [ "$?" == "0" ]; then
-		if [ "$xgp_native" ]; then
+		if [ "$xgp_native" == "1" ]; then
 			ainfo="${xgp_arch}(N)"
 		else
 			ainfo="${xgp_arch}"
