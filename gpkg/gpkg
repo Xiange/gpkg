@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.66
+gpkg_version=0.10.70
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -565,6 +565,48 @@ gpkg_search()
 	done
 }
 
+#
+# Re-generate md5sum
+#	$1 is path, $2 is file name
+#	return 0 if OK, others failed
+
+
+xg_create_md5sum()
+{
+	local lretv
+
+	pushd ${1} >/dev/null 
+	err_check "cd ${1} failed"
+	rm -f ${2}.md5
+	md5sum ${2} > ${2}.md5
+	err_check "generate MD5 sum failed."
+	chmod a=r ${2}.md5
+	popd >/dev/null
+}
+
+
+#
+# check md5sum
+#	$1 is path, $2 is file name
+#	return 0 if OK, others failed
+
+xg_ck_md5sum()
+{
+	local lretv
+
+	pushd "$1" >/dev/null
+	err_check "cd $1 failed."
+
+	md5sum -c "${2}.md5"
+	lretv="$?"
+
+	popd >/dev/null
+	return $lretv
+}
+
+
+
+
 
 #
 # download packet
@@ -581,7 +623,10 @@ check_and_download_raw()
 	do
 		#check if package has already exist.
 		if [ -f ${XGPATH_SOURCE}/${fname} ]; then
-			printf "%s exists, Skip.\n" $fname
+			showinfo "$fname exists, checking MD5...\n" 
+
+			xg_ck_md5sum "${XGPATH_SOURCE}" "${fname}"
+			err_check "${XGPATH_SOURCE}/${fname} MD5 check failed."
 			return 0
 		else
 			#check old file
@@ -589,6 +634,11 @@ check_and_download_raw()
 				printf "%s exists in old location, Skip.\n" $fname
 				mv ${XGPATH_SOURCE_RAW}/${fname} ${XGPATH_SOURCE}
 				err_check "move ${fname} to ${XGPATH_SOURCE_RAW} failed"
+
+				mv ${XGPATH_SOURCE_RAW}/${fname}.md5 ${XGPATH_SOURCE}
+
+				xg_ck_md5sum "${XGPATH_SOURCE}" "${fname}"
+				err_check "${XGPATH_SOURCE}/${fname} MD5 check failed."
 				return 0
 			fi
 			printf "downloading from %s, retry %d...\n" ${1} ${retry}
@@ -602,6 +652,9 @@ check_and_download_raw()
 			if [ "$?" == "0" ]; then
 				#download ok.
 				mv ${XGPATH_SOURCE}/${fname}.tmp ${XGPATH_SOURCE}/${fname}
+
+				#record md5
+				xg_create_md5sum "${XGPATH_SOURCE}" "${fname}"
 				return 0
 			fi
 			sleep 2
@@ -2990,7 +3043,7 @@ gpkg_show_rdep()
 	for i in $sret
 	do
 		((count++))
-		printf "%-4d %s\n" $count $i
+		printf "%-4d $SUCCESS%s$NORMAL\n" $count $i
 	done
 }
 
@@ -2999,8 +3052,10 @@ gpkg_rdep()
 {
 	local sofile
 	local i
+	local -A arrf
+	
 
-	sofile=$(gpkg -l $1 | grep "\.so$")
+	sofile=$(gpkg -l $1 | grep -o "/.*\.so\b")
 	if [ -z "$sofile" ]; then
 		echo "Error: package $1 has no so file"
 		exit 1
@@ -3012,7 +3067,13 @@ gpkg_rdep()
 		if [ "$?" == "0" ]; then
 			continue
 		fi
+		if [ "${arrf["$i"]}" == "1" ]; then 
+			continue
+		fi
+		#echo $i
+		#echo $(basename $i .)
 		gpkg_show_rdep $(basename $i)
+		arrf["$i"]="1"
 	done
 
 }
