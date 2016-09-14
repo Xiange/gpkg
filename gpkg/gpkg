@@ -70,7 +70,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.70
+gpkg_version=0.10.71
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -1065,18 +1065,6 @@ gpkg_beginbuild()
 	xgb_unpack
 	err_check "[Error] call xgb_unpack failed"
 
-	#call config and store config result
-	rm -f $XGPATH_BUILD/$N-$V$R.pipe
-	mkfifo $XGPATH_BUILD/$N-$V$R.pipe
-	tee $XGPATH_BUILD/$N-$V$R.config < $XGPATH_BUILD/$N-$V$R.pipe & 
-	xgb_config >  $XGPATH_BUILD/$N-$V$R.pipe
-	if [ "$?" != "0" ]; then
-		sleep 1
-		echo "[Error] call xgb_config failed"
-		rm -f $XGPATH_BUILD/$N-$V$R.pipe
-		exit 1
-	fi
-
 	#record correct config
 	echo "XGB_ARCH=\"$XGB_ARCH\"" > $XGPATH_BUILD/$N-$V$R.para
 	echo "XGB_PREFIX=\"$XGB_PREFIX\"" >> $XGPATH_BUILD/$N-$V$R.para
@@ -1093,6 +1081,20 @@ gpkg_beginbuild()
 
 	#stort current path
 	pwd > $XGPATH_BUILD/install_path
+
+
+	#call config and store config result
+	rm -f $XGPATH_BUILD/$N-$V$R.pipe
+	mkfifo $XGPATH_BUILD/$N-$V$R.pipe
+	tee $XGPATH_BUILD/$N-$V$R.config < $XGPATH_BUILD/$N-$V$R.pipe & 
+	xgb_config >  $XGPATH_BUILD/$N-$V$R.pipe
+	if [ "$?" != "0" ]; then
+		sleep 1
+		echo "[Error] call xgb_config failed"
+		rm -f $XGPATH_BUILD/$N-$V$R.pipe
+		exit 1
+	fi
+
 
 	#call build
 	xgb_build
@@ -3475,7 +3477,7 @@ xg_gettmpsize()
 # $1 is para file
 xg_getarch()
 {
-	xgp_arch=$(fgrep "XGB_ARCH=" $1)
+	xgp_arch=$(fgrep "XGB_ARCH=" $1 2>/dev/null)
 	if [ -z "$xgp_arch" ]; then
 		xgp_arch="Unknown"
 		xgp_native=0
