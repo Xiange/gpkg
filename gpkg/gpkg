@@ -1079,10 +1079,6 @@ gpkg_beginbuild()
 	echo "GPKG_VERSION=\"$gpkg_version\"" >> $XGPATH_BUILD/$N-$V$R.para
 
 
-	#stort current path
-	pwd > $XGPATH_BUILD/install_path
-
-
 	#call config and store config result
 	rm -f $XGPATH_BUILD/$N-$V$R.pipe
 	mkfifo $XGPATH_BUILD/$N-$V$R.pipe
@@ -1095,6 +1091,8 @@ gpkg_beginbuild()
 		exit 1
 	fi
 
+	#stort current path
+	pwd > $XGPATH_BUILD/install_path
 
 	#call build
 	xgb_build
