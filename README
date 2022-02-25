@@ -1,4 +1,4 @@
-gpkg : UI interface for Xiange Linux package management system.
+gpkg : UI of Xiange Linux package management system.
 
 
 to Install
@@ -6,7 +6,6 @@ to Install
 	configure
 	make
 	make install 
-	just same as auto-tools based packages.
 
 
 Dependence:
@@ -36,6 +35,24 @@ How to use:
 
 
 History:
+
+	0.10.50 2015-11-30
+		bug fix: source var is not be set in install stage.
+
+	0.10.49 2015-11-20
+		 add command: gpkg cd,cs
+
+	0.10.48 2015-05-20
+		add $N-$V$R to source path. fixed some bugs.
+
+	0.10.47.2 2015-02-12
+		list confilct items.
+
+	0.10.47.1 2014-06-23
+		fixed RM bugs.
+
+	0.10.47 2014-06-17
+		add 'gpkg -cklfs' to check which package can be updated from LFS website.
 
 	0.10.46	2014-06-11
 		add 'gpkg -cu' to check the packages can be upgraded.

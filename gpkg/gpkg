@@ -33,10 +33,11 @@ XGINST_PREFIX="--prefix=/usr"
 XGB_CONFIG="$XGINST_PREFIX "
 XG_I18N="en zh_CN"
 XGPARA_MAKE="-j `nproc`"
+XGPARA_STRIP=1
 
 
 #GIT server
-XG_GITSVR="git://github.com/swordhui/xglibs.git"
+XG_GITSVR="https://github.com/swordhui/xglibs.git"
 
 #parameters for wget
 XG_WGET_PARA="--no-check-certificate"
@@ -70,7 +71,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.71
+gpkg_version=0.10.75
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -91,8 +92,8 @@ gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-ckb package	$NORMAL\tcheck binary packages\n
 	$INFO\t-chroot path	$NORMAL\tchroot to new system, for system installing\n
 	$INFO\t-unchroot path	$NORMAL\tun-chroot\n
-	$INFO\t-rdep package	$NORMAL\tshow reverse dependence\n
-	$INFO\t-pack dir name version 	$NORMAL\tpack all files in dir to xgb file.\n
+	$INFO\t-rdep package/file	$NORMAL\tshow reverse dependence\n
+	$INFO\t-pack dir name version arch 	$NORMAL\tpack all files in dir to xgb file.\n
 	$INFO\t-packraw package $NORMAL\tcontinue install compiled package.\n
 	$INFO\t-cu\t$NORMAL\tcheck which package can be upgrade.\n
 	$INFO\t-cn\t$NORMAL\tcheck new packages in xglib.\n
@@ -102,6 +103,7 @@ gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\trm package-version	$NORMAL\tremove xgb file with vim\n
 	$INFO\tcs package	$NORMAL\tshow script path of specified package\n
 	$INFO\tcd package	$NORMAL\tshow db path of specified package\n
+	$INFO\tckstage 	$NORMAL\tcheck stages\n
 	$INFO\t-info		$NORMAL\t\tshow gpkg parameters. to modify parameters, gpkg info > $XGROOT/etc/xgparas, then edit it.\n
 XianGe base is at $XGPATH\n
 	$INFO\tGPKGNC$NORMAL\t\t\"GPKGNC=1 gpkg\" to remove output color.\n
@@ -773,8 +775,12 @@ gpkg_begin_download()
 	xgb_init
 
 	#create source directory.
-	mkdir -p $XGPATH_SOURCE
-	err_check "[Error] Create dir $XGPATH_SOURCE failed."
+	if [ -d $XGPATH_SOURCE ]; then
+		echo "$XGPATH_SOURCE found"
+	else
+		mkdir -p $XGPATH_SOURCE
+		err_check "[Error] Create dir $XGPATH_SOURCE failed."
+	fi
 
 	#download all files
 	for url in ${SRC_URI}
@@ -922,6 +928,8 @@ gpkg_dopack()
 {
 	local destpath="$XGPATH_DEST/$XGPATH_DB_RAW/$T/$N"
 
+	showinfo "generate files list.."
+
 	#generate file list
 	cd $XGPATH_DEST
 	find 2>/dev/null | xgfileinfo > /tmp/file-$N-$V$R
@@ -981,7 +989,12 @@ gpkg_mkpackage()
 	gpkg_strip_mani18n $XGPATH_DEST/usr/share
 
 	#strip bin
-	gpkg_stip_bin $XGPATH_DEST
+	if [ v"$XGPARA_STRIP" == "v1" ]; then
+		gpkg_stip_bin $XGPATH_DEST
+	else
+		showinfo "skip binary strp."
+	fi
+	echo "XGPARA_STRIP=\"$XGPARA_STRIP\"" >> $XGPATH_BUILD/$N-$V$R.para
 
 
 	#compress man docs
@@ -1068,11 +1081,7 @@ gpkg_beginbuild()
 	#record correct config
 	echo "XGB_ARCH=\"$XGB_ARCH\"" > $XGPATH_BUILD/$N-$V$R.para
 	echo "XGB_PREFIX=\"$XGB_PREFIX\"" >> $XGPATH_BUILD/$N-$V$R.para
-	echo "CFLAGS=\"$CFLAGS\"" >> $XGPATH_BUILD/$N-$V$R.para
-	echo 'CXXFLAGS="$CFLAGS"' >> $XGPATH_BUILD/$N-$V$R.para
 	echo "XG_I18N=\"$XG_I18N\"" >> $XGPATH_BUILD/$N-$V$R.para
-	echo "XGB_CONFIG=\"$XGB_CONFIG\"" >> $XGPATH_BUILD/$N-$V$R.para
-	echo "XGPARA_MAKE=\"$XGPARA_MAKE\"" >> $XGPATH_BUILD/$N-$V$R.para
 
 	cpuname=$(cat /proc/cpuinfo | grep "model name" | head -n 1)
 	echo "CPU_NAME=\"$cpuname\"" >> $XGPATH_BUILD/$N-$V$R.para
@@ -1091,12 +1100,18 @@ gpkg_beginbuild()
 		exit 1
 	fi
 
+	echo "XGB_CONFIG=\"$XGB_CONFIG\"" >> $XGPATH_BUILD/$N-$V$R.para
+
 	#stort current path
 	pwd > $XGPATH_BUILD/install_path
 
 	#call build
 	xgb_build
 	err_check "[Error] call xgb_build failed"
+
+	echo "CFLAGS=\"$CFLAGS\"" >> $XGPATH_BUILD/$N-$V$R.para
+	echo 'CXXFLAGS="$CFLAGS"' >> $XGPATH_BUILD/$N-$V$R.para
+	echo "XGPARA_MAKE=\"$XGPARA_MAKE\"" >> $XGPATH_BUILD/$N-$V$R.para
 
 	#check if possiable, and ignore result
 	#store information to /tmp/xiange/$N-$V$R.test
@@ -1184,6 +1199,7 @@ gpkg_do_install()
 
 	#clean up
 	rm -rf $XGPATH_BUILD
+	cd /tmp
 	return 0
 }
 
@@ -1847,7 +1863,7 @@ gpkg_csvop_update_file()
 		#symbol.
 		if [ -n "$otype" ]; then
 			#found in old package, skip and remove mark
-			unset delmark['${value[1]}']
+			unset delmark["${value[1]}"]
 			echo  "OK   (US) $cname"
 		else
 			#not found in old package
@@ -1859,7 +1875,7 @@ gpkg_csvop_update_file()
 		#check in old file
 		if [ -n "$otype" ]; then
 			#found in old package, skip
-			unset delmark['${value[1]}']
+			unset delmark["${value[1]}"]
 			echo  "OK   (UF) $cname"
 		else
 			#not found in old packge
@@ -1877,7 +1893,7 @@ gpkg_csvop_update_file()
 		#dirctory
 		if [ -n "$otype" ]; then
 			#found in old package, skip
-			unset delmark['${value[1]}']
+			unset delmark[${value[1]}]
 			echo  "OK   (UD) $cname"
 		else
 			#new directory
@@ -1896,7 +1912,7 @@ gpkg_csvop_update_file()
 	*)
 		if [ -n "$otype" ]; then
 			#found in old package, skip
-			unset delmark['${value[1]}']
+			unset delmark[${value[1]}]
 			echo  "OK   (U$ftype) $cname"
 		else
 			#new directory
@@ -2306,7 +2322,7 @@ gpkg_remove_file_basedon_mark()
 			else
 				showFailed "RM (S) $XGROOT${i} failed"
 			fi
-			unset delmark['$i']
+			unset delmark[$i]
 			;;
 		F)
 			#file
@@ -2316,7 +2332,7 @@ gpkg_remove_file_basedon_mark()
 			else
 				showFailed "RM (F) $XGROOT${i} failed"
 			fi
-			unset delmark['$i']
+			unset delmark[$i]
 			;;
 		O)
 			#device or other
@@ -2326,7 +2342,7 @@ gpkg_remove_file_basedon_mark()
 			else
 				showFailed "RM (O) $XGROOT${i} failed"
 			fi
-			unset delmark['$i']
+			unset delmark[$i]
 			;;
 		esac
 	done
@@ -3057,8 +3073,9 @@ gpkg_rdep()
 
 	sofile=$(gpkg -l $1 | grep -o "/.*\.so\b")
 	if [ -z "$sofile" ]; then
-		echo "Error: package $1 has no so file"
-		exit 1
+		#echo "Error: package $1 has no so file"
+		#exit 1
+		sofile=$1
 	fi
 
 	for i in $sofile
@@ -3551,6 +3568,7 @@ case "${1}" in
 	echo "XG_I18N=\"$XG_I18N\""
 	echo "XGB_CONFIG=\"$XGB_CONFIG\""
 	echo "XGPARA_MAKE=\"$XGPARA_MAKE\""
+	echo "XGPARA_STRIP=\"$XGPARA_STRIP\""
 	;;
 
 -s)
@@ -3725,6 +3743,7 @@ inststage)
 	#chroot to new system.
 	#$1=-chroot
 	#check parameter
+	export LANG=C
 	shift
 	if [ -z "$1" ]; then
 		echo "Please specify destination, such as:"
@@ -3840,6 +3859,13 @@ inststage)
 			echo "Please specify package version"
 			exit 1
 	fi
+
+	if [ -z "$5" ]; then
+			echo "Please specify package arch (i686,x86_64,arm..)"
+			exit 1
+	fi
+
+
 
 	
 	T="pack"
