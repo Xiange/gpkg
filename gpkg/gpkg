@@ -9,7 +9,7 @@
 #path define
 XGPATH_RAW=/var/xiange
 XGPATH=${XGROOT}${XGPATH_RAW}
-XGPATH_TOOLS=$XGPATH/tools
+XGPATH_LIST=$XGPATH/.list
 XGPATH_LIB=$XGPATH/xglibs
 XGPATH_SOURCE_RAW=$XGPATH/sources
 XGPATH_PACKAGE=$XGPATH/packages
@@ -71,7 +71,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.75
+gpkg_version=0.10.76
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -2005,7 +2005,7 @@ gpkg_do_stage1()
 
 		#check if binary package exist
 
-		if [ -f "$XGPATH_PACKAGE/list/$T-$N-$V$R.mark" ]; then
+		if [ -f "$XGPATH_LIST/$T-$N-$V$R.mark" ]; then
 			#exits
 			showOK "$line has been already installed"
 			continue
@@ -2018,8 +2018,8 @@ gpkg_do_stage1()
 		gpkg_upgrade_binary_package "$XGPATH_PACKAGE/$N-$V$R.xgp"
 
 
-		mkdir -p $XGPATH_PACKAGE/list
-		touch "$XGPATH_PACKAGE/list/$T-$N-$V$R.mark"
+		mkdir -p $XGPATH_LIST
+		touch "$XGPATH_LIST/$T-$N-$V$R.mark"
 
 
 		[ "$?" != "0" ] && break
