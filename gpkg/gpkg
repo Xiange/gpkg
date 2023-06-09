@@ -71,7 +71,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.77
+gpkg_version=0.10.78
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -3483,8 +3483,8 @@ xg_gettmpsize()
 {
 	local memsize
 	local swapsize
-	memsize=$(free | awk '$1 == "Mem:" {print $2}')
-	swapsize=$(free | awk '$1 == "Swap:" {print $2}')
+	memsize=$(LANG="C" free | awk '$1 == "Mem:" {print $2}')
+	swapsize=$(LANG="C" free | awk '$1 == "Swap:" {print $2}')
 	memsize=$(($memsize/2))
 	tmpsize=$(($swapsize+$memsize))
 }
@@ -3768,9 +3768,9 @@ inststage)
 
 	xg_gettmpsize
 	if [ "$tmpsize" -ge "3000000" ]; then
-		showOK ">> tmpfs size check OK, enabled."
+		showOK ">> tmpfs size (${tmpsize}K) check OK, enabled."
 		#mount tmp fs.
-       	mount -t tmpfs tmpfs $newroot/tmp -o size=$tmpsize
+       	mount -t tmpfs tmpfs $newroot/tmp -o size=${tmpsize}K
 		err_check "Error: mount $newroot/tmp failed."
 	else
 		echo -e $WARNING">> tmpfs is too small, disabled"$NORMAL
