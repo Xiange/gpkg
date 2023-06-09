@@ -71,7 +71,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.76
+gpkg_version=0.10.77
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -3492,7 +3492,7 @@ xg_gettmpsize()
 # $1 is para file
 xg_getarch()
 {
-	xgp_arch=$(fgrep "XGB_ARCH=" $1 2>/dev/null)
+	xgp_arch=$(grep -F "XGB_ARCH=" $1 2>/dev/null)
 	if [ -z "$xgp_arch" ]; then
 		xgp_arch="Unknown"
 		xgp_native=0
@@ -3503,7 +3503,7 @@ xg_getarch()
 		xgp_arch="${xgp_arch:10}"
 		xgp_arch="${xgp_arch%\"}"
 
-		xgp_native=$(fgrep "CFLAGS="  $1)
+		xgp_native=$(grep -F "CFLAGS="  $1)
 		xgp_native=$(echo $xgp_native | grep native)
 		if [ "$?" == "0" ]; then
 			#native
