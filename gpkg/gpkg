@@ -71,7 +71,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.78
+gpkg_version=0.10.79
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
@@ -3790,6 +3790,8 @@ inststage)
 	err_check "Error: mount $newroot/sys failed."
     mount --bind /dev $newroot/dev
 	err_check "Error: mount $newroot/dev failed."
+	mount -t tmpfs devshm $newroot/dev/shm
+	err_check "Error: mount $newroot/dev/shm failed."
 
 	#prepare resolv.conf
 	[ -d $newroot/etc ] || mkdir $newroot/etc
@@ -3822,6 +3824,8 @@ inststage)
 	err_check "Error: unmount $2/proc failed."
 	umount  $2/sys
 	err_check "Error: unmount $2/sys failed."
+	umount  $2/dev/shm
+	err_check "Error: unmount $2/dev/shm failed."
 	umount  $2/dev
 	err_check "Error: unmount $2/dev failed."
 	showOK "unmount $2 OK"
