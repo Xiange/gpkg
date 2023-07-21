@@ -37,7 +37,7 @@ XGPARA_STRIP=1
 
 
 #GIT server
-XG_GITSVR="https://github.com/swordhui/xglibs.git"
+XG_GITSVR="https://github.com/Xiange/xglibs.git"
 
 #parameters for wget
 XG_WGET_PARA="--no-check-certificate"
@@ -71,7 +71,7 @@ fi
 #
 # version and  usage 
 #
-gpkg_version=0.10.79
+gpkg_version=0.10.80
 gpkg_usage="
 gpkg $SUCCESS$gpkg_version$NORMAL, usage:\n
 	$INFO\t-v            	$NORMAL\t\tshow current version\n
